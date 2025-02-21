@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: google_speech
+      POSTGRES_DB: google_speech
+      POSTGRES_PASSWORD: O8IfbjmMtQek06kBsy8WzveVxu0GLGMo5RExBZadbn5AUA0UQh
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data_pgsql:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U google_speech" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend_google_speech_fastapi
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - backend_uploads:/app/data/uploads
+      - backend_downloads:/app/data/downloads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  db_data_pgsql:
+  backend_uploads:
+  backend_downloads:
+  redis_data:
