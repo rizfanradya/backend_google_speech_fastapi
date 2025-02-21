@@ -17,3 +17,5 @@ asyncpg
 bcrypt
 python-dotenv
 openpyxl
+redis
+aioredis

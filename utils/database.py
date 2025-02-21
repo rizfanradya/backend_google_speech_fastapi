@@ -1,7 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from contextlib import asynccontextmanager
 from .config import (
     DB_HOSTNAME as DBH,
     DB_NAME as DBN,
@@ -12,11 +11,7 @@ from .config import (
 
 DATABASE_URL = f"postgresql+asyncpg://{DBU}:{DBP}@{DBH}:{DBPRT}/{DBN}"
 
-db_engine = create_async_engine(
-    DATABASE_URL,
-    future=True,
-    echo=True,
-)
+db_engine = create_async_engine(DATABASE_URL, future=True)
 
 SessionLocal = sessionmaker(
     db_engine,
@@ -33,9 +28,3 @@ async def get_db():
         yield db
     finally:
         await db.close()
-
-
-@asynccontextmanager
-async def get_db_session():
-    async with SessionLocal() as db:
-        yield db

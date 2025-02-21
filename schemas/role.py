@@ -5,6 +5,9 @@ from typing import List
 class RoleSchema(BaseModel):
     role: str
 
+    class Config:
+        from_attributes = True
+
 
 class BaseSchema(RoleSchema):
     id: int

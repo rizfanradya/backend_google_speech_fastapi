@@ -7,6 +7,7 @@ load_dotenv()
 MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024  # 2mb
 ACCESS_TOKEN_EXPIRE_MINUTES = 8 * 60  # 8 hours
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+CACHE_EXPIRED = 86400  # 1 day
 ALGORITHM = "HS256"
 
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
@@ -22,6 +23,7 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME')
 
+REDIS_URL = os.environ.get('REDIS_URL')
 
 # print(JWT_SECRET_KEY)
 # print(JWT_REFRESH_SECRET_KEY)
@@ -35,3 +37,5 @@ DB_NAME = os.environ.get('DB_NAME')
 # print(DB_USER)
 # print(DB_PASSWORD)
 # print(DB_NAME)
+
+# print(REDIS_URL)

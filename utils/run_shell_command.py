@@ -3,7 +3,6 @@ import subprocess
 import sys
 import shutil
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.future import select
 from sqlalchemy import text
 from .database import DATABASE_URL
 
@@ -42,14 +41,13 @@ async def run_shell_commands():
             except Exception as e:
                 print(f"Failed to delete {file_path}. reason: {e}")
 
-    # ✅ Gunakan engine tanpa "async with"
     engine = create_async_engine(DATABASE_URL, future=True)
 
     async with engine.begin() as conn:
         if await table_exists(conn, 'alembic_version'):
             await conn.execute(text("TRUNCATE TABLE alembic_version RESTART IDENTITY CASCADE"))
 
-    await engine.dispose()  # ✅ Pastikan engine ditutup setelah digunakan
+    await engine.dispose()
 
     commands.extend([
         f"{python_cmd} -m alembic revision --autogenerate -m 'rev'",

@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 
 
 async def data_that_must_exist_in_the_database():
-    async for session in get_db():  # ✅ Gunakan async for untuk mendapatkan session
+    async for session in get_db():
         role_admin = await session.execute(select(Role).where(Role.role == 'admin'))
         role_admin = role_admin.scalars().first()
 

@@ -5,8 +5,8 @@ import api.role as role
 
 routers = [
     (auth.router, "Auth API", "/api"),
-    (role.router, "Role API", "/api"),
-    (user.router, "User API", "/api"),
+    (role.router, "Role API", "/api/role"),
+    (user.router, "User API", "/api/user"),
 ]
 
 sorted_routers = sorted(routers, key=lambda x: x[1])

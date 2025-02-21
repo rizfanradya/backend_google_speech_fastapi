@@ -30,3 +30,12 @@ class UserResponseSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserAuth(MainBaseSchema):
+    id: int
+    role: RoleSchema
+    password: str
+
+    class Config:
+        from_attributes = True
