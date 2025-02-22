@@ -110,6 +110,8 @@ async def delete(id: int, session: AsyncSession = Depends(get_db), token: str = 
         result = await session.execute(select(BaseModel).where(BaseModel.id == int(id)))
         query = result.scalars().first()
         if query:
+            await redis.delete(f"{title}:{id}")
+            await redis.delete(f"{title}:{query.email}")
             await session.delete(query)
             await session.commit()
     except Exception as error:

@@ -5,7 +5,6 @@ from utils.auth import TokenAuthorization
 from utils.error_response import send_error_response
 from utils.redis import redis
 from utils.config import CACHE_EXPIRED
-from typing import Optional
 from sqlalchemy import or_, cast, String, func
 from sqlalchemy.future import select
 import json
@@ -41,6 +40,7 @@ async def update(id: int, data: MainBaseSchema, session: AsyncSession = Depends(
     if data_info is None:
         send_error_response(msg_not_found)
     try:
+        await redis.delete(f"{title}:{id}")
         for key, value in data.dict().items():
             if value is not None:
                 setattr(data_info, key, value)
@@ -105,6 +105,7 @@ async def delete(id: int, session: AsyncSession = Depends(get_db), token: str = 
         result = await session.execute(select(BaseModel).where(BaseModel.id == int(id)))
         query = result.scalars().first()
         if query:
+            await redis.delete(f"{title}:{id}")
             await session.delete(query)
             await session.commit()
     except Exception as error:
