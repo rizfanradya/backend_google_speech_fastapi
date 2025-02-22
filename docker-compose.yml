@@ -54,7 +54,7 @@ services:
       KAFKA_NUM_PARTITIONS: 3
 
   connect:
-    image: debezium/connect:latest
+    image: debezium/connect:2.5
     restart: always
     depends_on:
       - kafka
