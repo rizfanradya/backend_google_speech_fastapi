@@ -24,6 +24,7 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME')
 
 REDIS_URL = os.environ.get('REDIS_URL')
+ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
 
 # print(JWT_SECRET_KEY)
 # print(JWT_REFRESH_SECRET_KEY)
@@ -39,3 +40,4 @@ REDIS_URL = os.environ.get('REDIS_URL')
 # print(DB_NAME)
 
 # print(REDIS_URL)
+# print(ELASTICSEARCH_URL)
