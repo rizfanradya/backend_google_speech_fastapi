@@ -11,5 +11,5 @@ RUN apt-get update && \
   apt-get update && \
   apt-get install -y postgresql-client-17
 
-EXPOSE 8001
+EXPOSE 8000
 CMD ["python3", "app.py"]
