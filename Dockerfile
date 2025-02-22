@@ -11,7 +11,5 @@ RUN apt-get update && \
   apt-get update && \
   apt-get install -y postgresql-client-17
 
-ENTRYPOINT ["/bin/sh", "-c", "sleep 10 && sh ./setup_connectors.sh"]
-
 EXPOSE 8000
-CMD ["python3", "app.py"]
+ENTRYPOINT ["/bin/sh", "-c", "sleep 10 && sh ./setup_connectors.sh && exec python3 app.py"]
