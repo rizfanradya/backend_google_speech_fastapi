@@ -10,6 +10,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utils.backup_database import backup_database
 from contextlib import asynccontextmanager
 
+# Scheduler
+scheduler = AsyncIOScheduler()
+scheduler.add_job(data_that_must_exist_in_the_database, "interval", days=1)
+scheduler.add_job(check_and_remove_orphaned_files, "interval", hours=1)
+scheduler.add_job(backup_database, "cron", hour=0, minute=0)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,8 +23,9 @@ async def lifespan(app: FastAPI):
     await data_that_must_exist_in_the_database()
     await check_and_remove_orphaned_files()
     await backup_database()
+    scheduler.start()
     yield
-
+    scheduler.shutdown()
 
 # FastAPI instance
 app = FastAPI(title="App Google Speech FastAPI", lifespan=lifespan)
@@ -35,27 +42,6 @@ app.add_middleware(
 app.include_router(router)
 
 
-# Scheduler
-scheduler = AsyncIOScheduler()
-scheduler.add_job(
-    data_that_must_exist_in_the_database,
-    'interval',
-    days=1
-)
-scheduler.add_job(
-    check_and_remove_orphaned_files,
-    'interval',
-    hours=1
-)
-scheduler.add_job(
-    backup_database,
-    'cron',
-    hour=0,
-    minute=0
-)
-scheduler.start()
-
-
 @app.get("/")
 async def root():
     await data_that_must_exist_in_the_database()
@@ -68,5 +54,5 @@ if __name__ == "__main__":
     uvicorn.run(
         "app:app", host="0.0.0.0",
         reload=True,
-        port=int(BACKEND_PORT)
+        port=int(BACKEND_PORT),
     )
