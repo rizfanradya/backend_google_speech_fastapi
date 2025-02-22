@@ -37,42 +37,61 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     restart: always
+    ports:
+      - "12181:2181"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 21811
+      ZOOKEEPER_CLIENT_PORT: 2181
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: wurstmeister/kafka:latest
     restart: always
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
-      - "19092:9092"
+      - "9092:9092"
+    expose:
+      - "19092"
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:19092,OUTSIDE://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:19092,OUTSIDE://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_CREATE_TOPICS: "google_speech_v1"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "kafka:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   connect:
-    image: debezium/connect:2.5
+    image: debezium/connect:3.0.0.Final
     restart: always
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     ports:
       - "18083:8083"
     environment:
-      BOOTSTRAP_SERVERS: "kafka:9092"
+      BOOTSTRAP_SERVERS: "kafka:19092"
       GROUP_ID: "debezium_connect_group"
       CONFIG_STORAGE_TOPIC: "connect_configs"
       OFFSET_STORAGE_TOPIC: "connect_offsets"
       STATUS_STORAGE_TOPIC: "connect_status"
       KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-    command: ["/bin/sh", "-c", "sleep 15 && /setup-connectors.sh"]
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
     restart: always
     environment:
       - discovery.type=single-node
@@ -96,6 +115,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
 volumes:
