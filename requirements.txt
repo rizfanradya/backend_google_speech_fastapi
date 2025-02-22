@@ -20,3 +20,4 @@ openpyxl
 redis
 aioredis
 elasticsearch
+asyncio
