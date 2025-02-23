@@ -5,6 +5,7 @@ from utils.config import BACKEND_PORT
 from utils.router import router
 from utils.run_shell_command import run_shell_commands
 from utils.data_must_exist_db import data_that_must_exist_in_the_database
+from utils.setup_connectors import setup_connectors
 from utils.remove_orphaned_files import check_and_remove_orphaned_files
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utils.backup_database import backup_database
@@ -19,6 +20,7 @@ scheduler.add_job(backup_database, "cron", hour=0, minute=0)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await setup_connectors()
     await run_shell_commands()
     await data_that_must_exist_in_the_database()
     await check_and_remove_orphaned_files()

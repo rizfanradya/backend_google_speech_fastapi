@@ -21,3 +21,4 @@ redis
 aioredis
 elasticsearch
 asyncio
+httpx

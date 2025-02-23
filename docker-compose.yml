@@ -93,18 +93,15 @@ services:
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/kafka/plugins"
     volumes:
-      - ./data/kafka-connect-config:/kafka/configs
-      - ./data/kafka-connect-plugins:/kafka/plugins
+      - ./data/kafka_connector/elasticsearch:/kafka/plugins/elasticsearch
+      - ./data/kafka_connector/debezium:/kafka/plugins/debezium
     command: >
-      bash -c "
-      if [ ! -d '/kafka/plugins/elasticsearch' ]; then
-        echo '🔍 Downloading Elasticsearch Connector...'
-        mkdir -p /kafka/plugins/elasticsearch && 
-        curl -sSLo /kafka/plugins/elasticsearch.zip https://packages.confluent.io/maven/io/confluent/kafka-connect-elasticsearch/11.1.6/kafka-connect-elasticsearch-11.1.6.zip &&
-        unzip -q /kafka/plugins/elasticsearch.zip -d /kafka/plugins/elasticsearch &&
-        rm /kafka/plugins/elasticsearch.zip
-      fi;
-      /etc/confluent/docker/run"
+      /etc/confluent/docker/run
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8083"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
@@ -116,6 +113,11 @@ services:
       - "19200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9200"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -133,6 +135,10 @@ services:
       redis:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      connect:
         condition: service_healthy
 
 volumes:

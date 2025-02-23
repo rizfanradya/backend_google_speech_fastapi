@@ -25,6 +25,7 @@ DB_NAME = os.environ.get('DB_NAME')
 
 REDIS_URL = os.environ.get('REDIS_URL')
 ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+KAFKA_CONNECT_URL = os.environ.get('KAFKA_CONNECT_URL')
 
 # print(JWT_SECRET_KEY)
 # print(JWT_REFRESH_SECRET_KEY)
@@ -41,3 +42,4 @@ ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
 
 # print(REDIS_URL)
 # print(ELASTICSEARCH_URL)
+# print(KAFKA_CONNECT_URL)
