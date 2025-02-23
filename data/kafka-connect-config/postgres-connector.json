@@ -1,0 +1,20 @@
+{
+  "name": "postgres-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "google_speech",
+    "database.password": "O8IfbjmMtQek06kBsy8WzveVxu0GLGMo5RExBZadbn5AUA0UQh",
+    "database.dbname": "google_speech",
+    "database.server.name": "postgres_server",
+    "database.include.list": "public",
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_slot",
+    "table.include.list": "public.role",
+    "topic.prefix": "postgres",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "heartbeat.interval.ms": "10000"
+  }
+}
