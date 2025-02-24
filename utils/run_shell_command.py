@@ -30,6 +30,7 @@ async def run_shell_commands():
     commands = []
 
     versions_folder = os.path.join(project_root, 'alembic', 'versions')
+    os.makedirs(versions_folder, exist_ok=True)
     if os.path.exists(versions_folder):
         for filename in os.listdir(versions_folder):
             file_path = os.path.join(versions_folder, filename)

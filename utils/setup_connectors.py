@@ -1,6 +1,14 @@
 import httpx
 import asyncio
-from .config import KAFKA_CONNECT_URL
+from .config import (
+    KAFKA_CONNECT_URL,
+    DB_HOSTNAME,
+    DB_PORT,
+    DB_USER,
+    DB_PASSWORD,
+    DB_NAME,
+    ELASTICSEARCH_URL,
+)
 
 
 async def setup_connectors():
@@ -35,11 +43,11 @@ async def setup_connectors():
                 "name": "postgres-connector",
                 "config": {
                     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-                    "database.hostname": "postgres",
-                    "database.port": "5432",
-                    "database.user": "google_speech",
-                    "database.password": "O8IfbjmMtQek06kBsy8WzveVxu0GLGMo5RExBZadbn5AUA0UQh",
-                    "database.dbname": "google_speech",
+                    "database.hostname": DB_HOSTNAME,
+                    "database.port": DB_PORT,
+                    "database.user": DB_USER,
+                    "database.password": DB_PASSWORD,
+                    "database.dbname": DB_NAME,
                     "database.server.name": "postgres_server",
                     "database.include.list": "public.role,public.user",
                     "plugin.name": "pgoutput",
@@ -70,7 +78,7 @@ async def setup_connectors():
                 "name": "es-connector",
                 "config": {
                     "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
-                    "connection.url": "http://elasticsearch:9200",
+                    "connection.url": ELASTICSEARCH_URL,
                     "tasks.max": "1",
                     "topics.regex": "postgres.public.role|postgres.public.user",
                     "key.ignore": "true",
