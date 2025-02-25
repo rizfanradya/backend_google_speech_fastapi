@@ -4,6 +4,12 @@ import os
 
 load_dotenv()
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "voice_ai_bot_service_account.json"
+    )
+)
 MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024  # 2mb
 ACCESS_TOKEN_EXPIRE_MINUTES = 8 * 60  # 8 hours
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
@@ -24,6 +30,7 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME')
 
 REDIS_URL = os.environ.get('REDIS_URL')
+GEMINIAI_API_KEY = os.environ.get('GEMINIAI_API_KEY')
 
 # print(JWT_SECRET_KEY)
 # print(JWT_REFRESH_SECRET_KEY)
@@ -39,3 +46,4 @@ REDIS_URL = os.environ.get('REDIS_URL')
 # print(DB_NAME)
 
 # print(REDIS_URL)
+# print(GEMINIAI_API_KEY)

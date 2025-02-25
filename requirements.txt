@@ -19,6 +19,8 @@ python-dotenv
 openpyxl
 redis
 aioredis
-elasticsearch
 asyncio
-httpx
+google-cloud-speech
+google-generativeai
+google-cloud-texttospeech
+ffmpeg
