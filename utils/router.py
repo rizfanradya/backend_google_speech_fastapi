@@ -2,11 +2,13 @@ from fastapi import APIRouter
 import api.user as user
 import api.auth as auth
 import api.role as role
+import api.app as app
 
 routers = [
     (auth.router, "Auth API", "/api"),
     (role.router, "Role API", "/api/role"),
     (user.router, "User API", "/api/user"),
+    (app.router, "App API", "/api/app"),
 ]
 
 sorted_routers = sorted(routers, key=lambda x: x[1])
