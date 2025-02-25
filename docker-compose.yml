@@ -1,4 +1,3 @@
-# version: "3.8"
 services:
   postgres:
     image: postgres:latest
@@ -11,9 +10,6 @@ services:
       - "15432:5432"
     volumes:
       - db_data_pgsql:/var/lib/postgresql/data
-      - ./data/init_scripts:/docker-entrypoint-initdb.d
-    command: >
-      postgres -c wal_level=logical -c max_replication_slots=4 -c max_wal_senders=4
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U google_speech" ]
       interval: 10s
@@ -34,91 +30,6 @@ services:
       timeout: 5s
       retries: 5
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    restart: always
-    ports:
-      - "12181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    healthcheck:
-      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    restart: always
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-    ports:
-      - "19092:9092"
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:19092,OUTSIDE://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:19092,OUTSIDE://host.docker.internal:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_CREATE_TOPICS: "google_speech_v1"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z kafka 9092 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  connect:
-    image: confluentinc/cp-kafka-connect:latest
-    restart: always
-    depends_on:
-      kafka:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    ports:
-      - "18083:8083"
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: "kafka:19092"
-      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
-      CONNECT_GROUP_ID: "debezium_connect_group"
-      CONNECT_CONFIG_STORAGE_TOPIC: "connect-configs"
-      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
-      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
-      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_PLUGIN_PATH: "/usr/share/java,/kafka/plugins"
-    volumes:
-      - ./data/kafka_connector/elasticsearch:/kafka/plugins/elasticsearch
-      - ./data/kafka_connector/debezium:/kafka/plugins/debezium
-    command: >
-      /etc/confluent/docker/run
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8083"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
-    restart: always
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    ports:
-      - "19200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9200"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: .
@@ -134,16 +45,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-      connect:
-        condition: service_healthy
 
 volumes:
   db_data_pgsql:
+  redis_data:
   backend_uploads:
   backend_downloads:
-  redis_data:
-  elasticsearch_data:

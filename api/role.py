@@ -5,7 +5,6 @@ from utils.auth import TokenAuthorization
 from utils.error_response import send_error_response
 from utils.redis import redis
 from utils.config import CACHE_EXPIRED
-from utils.elasticsearch import es
 from sqlalchemy import or_, cast, String, func
 from sqlalchemy.future import select
 import json
@@ -64,29 +63,16 @@ async def get_all(limit: int = 10, offset: int = 0, session: AsyncSession = Depe
 
 @router.get('/_search', response_model=GetAllSchema)
 async def search(search: str, session: AsyncSession = Depends(get_db), token: str = Depends(TokenAuthorization)):
-    # query = await session.execute(select(BaseModel).filter(or_(*[
-    #     cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
-    #     if getattr(BaseModel, column).type.python_type == str
-    #     else cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
-    #     for column in BaseModel.__table__.columns.keys()
-    # ])))
-
-    # total_data = await session.execute(select(func.count()).select_from(BaseModel))
-    # total_data = total_data.scalar()
-
-    query = {
-        "query": {
-            "multi_match": {
-                "query": search,
-                "fields": ["role"]
-            }
-        }
-    }
-    es_result = es.search(index="roles", body=query)
-    data = [hit["_source"] for hit in es_result["hits"]["hits"]]
+    query = await session.execute(select(BaseModel).filter(or_(*[
+        cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
+        if getattr(BaseModel, column).type.python_type == str
+        else cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
+        for column in BaseModel.__table__.columns.keys()
+    ])))
+    total_data = await session.execute(select(func.count()).select_from(BaseModel))
     return {
-        "total_data": len(data),
-        "data": data
+        "total_data": total_data.scalar(),
+        "data": query.scalars().all()
     }
 
 

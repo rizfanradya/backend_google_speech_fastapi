@@ -6,7 +6,6 @@ from utils.error_response import send_error_response
 from utils.hashed_password import hashed_password
 from utils.redis import redis
 from utils.config import CACHE_EXPIRED
-from utils.elasticsearch import es
 from sqlalchemy import or_, cast, String, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -69,34 +68,16 @@ async def get_all(limit: int = 10, offset: int = 0, session: AsyncSession = Depe
 
 @router.get('/_search', response_model=GetAllSchema)
 async def search(search: str, session: AsyncSession = Depends(get_db), token: str = Depends(TokenAuthorization)):
-    # query = await session.execute(select(BaseModel).options(joinedload(BaseModel.role)).filter(or_(*[
-    #     cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
-    #     if getattr(BaseModel, column).type.python_type == str
-    #     else cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
-    #     for column in BaseModel.__table__.columns.keys()
-    # ])))
-
-    # total_data = await session.execute(select(func.count()).select_from(BaseModel))
-    # total_data = total_data.scalar()
-
-    # return {
-    #     "total_data": total_data,
-    #     "data": query.scalars().all()
-    # }
-
-    query = {
-        "query": {
-            "multi_match": {
-                "query": search,
-                "fields": ["username", "email", "first_name", "last_name"]
-            }
-        }
-    }
-    es_result = es.search(index="users", body=query)
-    data = [hit["_source"] for hit in es_result["hits"]["hits"]]
+    query = await session.execute(select(BaseModel).options(joinedload(BaseModel.role)).filter(or_(*[
+        cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
+        if getattr(BaseModel, column).type.python_type == str
+        else cast(getattr(BaseModel, column), String).ilike(f"%{search}%")
+        for column in BaseModel.__table__.columns.keys()
+    ])))
+    total_data = await session.execute(select(func.count()).select_from(BaseModel))
     return {
-        "total_data": len(data),
-        "data": data
+        "total_data": total_data.scalar(),
+        "data": query.scalars().all()
     }
 
 
