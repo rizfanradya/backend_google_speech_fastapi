@@ -5,10 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from utils.auth import TokenAuthorization
 from utils.error_response import send_error_response
 from utils.config import GEMINIAI_API_KEY
+from models.speech_result import SpeechResult
 from io import BytesIO
 import tempfile
 import os
-import re
+import regex
 import subprocess
 from google.cloud import speech, texttospeech
 import google.generativeai as genai
@@ -30,8 +31,9 @@ async def create(file: UploadFile = File(...), session: AsyncSession = Depends(g
     try:
         # process audio
         file_ext = ".wav" if file.content_type == "audio/wav" else ".mp3"
+        file_content = await file.read()
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_audio:
-            temp_audio.write(await file.read())
+            temp_audio.write(file_content)
             temp_audio_path = temp_audio.name
 
         if file_ext == ".mp3":
@@ -64,19 +66,20 @@ async def create(file: UploadFile = File(...), session: AsyncSession = Depends(g
         if not response_results:
             send_error_response("Speech recognition failed.")
         text_result = response_results[0].alternatives[0].transcript
-        print(f"Recognized text: {text_result}")
 
         # Gemini AI
         ai_response = genai.GenerativeModel(
             "gemini-1.5-flash").generate_content(text_result)
-        response_text = getattr(ai_response, "text",
-                                "Maaf, saya tidak dapat memahami.").strip()
-        print(f"GeminiAI Response: {response_text}")
+        response_text = getattr(
+            ai_response,
+            "text",
+            "Maaf, saya tidak dapat memahami."
+        ).strip()
 
         # Text to Speech
         tts_response_audio_content = tts_client.synthesize_speech(
             input=texttospeech.SynthesisInput(
-                text=re.sub(r"[^\w\s]", "", response_text)
+                text=regex.sub(r"[^\p{L}\s.,!?;:]", "", response_text)
             ),
             voice=texttospeech.VoiceSelectionParams(
                 language_code='id-ID',
@@ -88,11 +91,45 @@ async def create(file: UploadFile = File(...), session: AsyncSession = Depends(g
             )
         ).audio_content
 
+        # add database
+        add_db = SpeechResult()
+        add_db.user_id = token['id']
+        add_db.ai_generated = response_text
+        add_db.speech_to_text = text_result
+        session.add(add_db)
+        await session.commit()
+        await session.refresh(add_db)
+
+        abs_path = os.path.abspath(__file__)
+        base_dir = os.path.dirname(os.path.dirname(abs_path))
+
+        upload_dir = os.path.join(
+            base_dir, 'data', 'uploads', 'input_file_audio')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_extension_upload = file.filename.split('.')[-1]
+        filename_upload = f'{add_db.id}.{file_extension_upload}'
+        file_path_upload = os.path.join(upload_dir, filename_upload)
+        add_db.input_file_audio = filename_upload
+        with open(file_path_upload, 'wb') as f:
+            f.write(file_content)
+
+        download_dir = os.path.join(
+            base_dir, 'data', 'downloads', 'output_file_audio')
+        os.makedirs(download_dir, exist_ok=True)
+        filename_download = f'{add_db.id}.wav'
+        file_path_download = os.path.join(download_dir, filename_download)
+        contents_download = BytesIO(tts_response_audio_content)
+        add_db.output_file_audio = filename_download
+        with open(file_path_download, 'wb') as f:
+            f.write(contents_download.getvalue())
+
+        await session.commit()
         return StreamingResponse(
-            BytesIO(tts_response_audio_content),
+            contents_download,
             media_type="audio/wav",
-            headers={"Content-Disposition": "attachment; filename=response.wav"}
-        )
+            headers={
+                "Content-Disposition": f"attachment; filename={filename_download}"
+            })
     except Exception as error:
         send_error_response(str(error), "Internal server error")
     finally:

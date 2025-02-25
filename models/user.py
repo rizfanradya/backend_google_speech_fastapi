@@ -17,3 +17,4 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     role_id = Column(Integer, ForeignKey('role.id'), nullable=False)
     role = relationship('Role', back_populates='user')
+    speech_result = relationship('SpeechResult', back_populates='user')
