@@ -45,7 +45,9 @@ async def create(file: UploadFile = File(...), session: AsyncSession = Depends(g
                     [
                         "ffmpeg", "-i", temp_audio_path, "-ar", "16000", "-ac", "1", "-f", "wav", temp_wav_path
                     ],
-                    check=True
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
                 )
             except subprocess.CalledProcessError as e:
                 raise Exception(f"FFmpeg conversion failed: {str(e)}")
