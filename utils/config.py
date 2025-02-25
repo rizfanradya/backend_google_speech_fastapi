@@ -31,6 +31,7 @@ DB_NAME = os.environ.get('DB_NAME')
 
 REDIS_URL = os.environ.get('REDIS_URL')
 GEMINIAI_API_KEY = os.environ.get('GEMINIAI_API_KEY')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 # print(JWT_SECRET_KEY)
 # print(JWT_REFRESH_SECRET_KEY)
@@ -47,3 +48,4 @@ GEMINIAI_API_KEY = os.environ.get('GEMINIAI_API_KEY')
 
 # print(REDIS_URL)
 # print(GEMINIAI_API_KEY)
+# print(OPENAI_API_KEY)

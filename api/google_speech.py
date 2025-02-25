@@ -4,7 +4,7 @@ from utils.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.auth import TokenAuthorization
 from utils.error_response import send_error_response
-from utils.config import GEMINIAI_API_KEY
+from utils.config import GEMINIAI_API_KEY, OPENAI_API_KEY
 from models.speech_result import SpeechResult
 from io import BytesIO
 import tempfile
@@ -13,11 +13,13 @@ import regex
 import subprocess
 from google.cloud import speech, texttospeech
 import google.generativeai as genai
+import openai
 
 router = APIRouter()
 speech_client = speech.SpeechClient()
 tts_client = texttospeech.TextToSpeechClient()
 genai.configure(api_key=GEMINIAI_API_KEY)
+openai.api_key = OPENAI_API_KEY
 ALLOWED_AUDIO_TYPES = {"audio/mpeg", "audio/wav", "audio/ogg"}
 
 
@@ -70,13 +72,24 @@ async def create(file: UploadFile = File(...), session: AsyncSession = Depends(g
         # Gemini AI
         ai_response = genai.GenerativeModel(
             "gemini-1.5-flash").generate_content(text_result)
+
+        # Open AI
+        # ai_response = openai.chat.completions.create(
+        #     model="gpt-3.5-turbo",
+        #     messages=[
+        #         {
+        #             "role": "user",
+        #             "content": text_result
+        #         }
+        #     ]
+        # ).choices[0].message.content
+
+        # Text to Speech
         response_text = getattr(
             ai_response,
             "text",
             "Maaf, saya tidak dapat memahami."
         ).strip()
-
-        # Text to Speech
         tts_response_audio_content = tts_client.synthesize_speech(
             input=texttospeech.SynthesisInput(
                 text=regex.sub(r"[^\p{L}\s.,!?;:]", "", response_text)
