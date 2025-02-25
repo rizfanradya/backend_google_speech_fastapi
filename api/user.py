@@ -36,26 +36,6 @@ async def create(data: MainBaseSchema, session: AsyncSession = Depends(get_db)):
         send_error_response(str(error), msg_already_exist)
 
 
-@router.put('/_update')
-async def update(id: int, data: MainBaseSchema, session: AsyncSession = Depends(get_db), token: str = Depends(TokenAuthorization)):
-    data.password = hashed_password(data.password)
-    result = await session.execute(select(BaseModel).where(BaseModel.id == int(id)))
-    data_info = result.scalars().first()
-    if data_info is None:
-        send_error_response(msg_not_found)
-    try:
-        await redis.delete(f"{title}:{id}")
-        await redis.delete(f"{title}:{data_info.email}")
-        for key, value in data.dict().items():
-            if value is not None:
-                setattr(data_info, key, value)
-        await session.commit()
-        await session.refresh(data_info)
-        return data_info
-    except Exception as error:
-        send_error_response(str(error), msg_already_exist)
-
-
 @router.get('/_get_all', response_model=GetAllSchema)
 async def get_all(limit: int = 10, offset: int = 0, session: AsyncSession = Depends(get_db), token: str = Depends(TokenAuthorization)):
     result = await session.execute(select(BaseModel).options(joinedload(BaseModel.role)).offset(offset).limit(limit))
@@ -99,6 +79,26 @@ async def get_by_id(id: int, session: AsyncSession = Depends(get_db)):
         return result
     except Exception as error:
         send_error_response(str(error), msg_not_found)
+
+
+@router.put('/_update')
+async def update(id: int, data: MainBaseSchema, session: AsyncSession = Depends(get_db), token: str = Depends(TokenAuthorization)):
+    data.password = hashed_password(data.password)
+    result = await session.execute(select(BaseModel).where(BaseModel.id == int(id)))
+    data_info = result.scalars().first()
+    if data_info is None:
+        send_error_response(msg_not_found)
+    try:
+        await redis.delete(f"{title}:{id}")
+        await redis.delete(f"{title}:{data_info.email}")
+        for key, value in data.dict().items():
+            if value is not None:
+                setattr(data_info, key, value)
+        await session.commit()
+        await session.refresh(data_info)
+        return data_info
+    except Exception as error:
+        send_error_response(str(error), msg_already_exist)
 
 
 @router.delete('/_delete')
