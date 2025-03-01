@@ -12,6 +12,12 @@ class MainBaseSchema(BaseModel):
     role_id: int
 
 
+class MainBaseSchemaCreate(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+
+
 class UserSchema(MainBaseSchema):
     password: str
 

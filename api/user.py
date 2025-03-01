@@ -10,10 +10,12 @@ from sqlalchemy import or_, cast, String, func
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 import json
+from models.role import Role as RoleModel
 from models.user import User as BaseModel
 from schemas.user import (
     UserSchema as MainBaseSchema,
     UserResponseSchema as GetAllSchema,
+    MainBaseSchemaCreate,
     BaseSchema
 )
 
@@ -24,13 +26,43 @@ msg_already_exist = 'User already exists or role id not found'
 
 
 @router.post('/_create')
-async def create(data: MainBaseSchema, session: AsyncSession = Depends(get_db)):
+async def create(data: MainBaseSchemaCreate, session: AsyncSession = Depends(get_db)):
     data.password = hashed_password(data.password)
+
     try:
-        add_db = BaseModel(**data.dict())
+        admin_role_id = 0
+        query_admin_role = await session.execute(select(RoleModel).where(RoleModel.role.ilike("admin")))
+        admin_role = query_admin_role.scalars().first()
+        if admin_role is None:
+            add_admin_role = RoleModel()
+            add_admin_role.role = "admin"
+            session.add(add_admin_role)
+            await session.commit()
+            await session.refresh(add_admin_role)
+            admin_role_id = add_admin_role.id
+        else:
+            admin_role_id = admin_role.id
+
+        name_parts = data.full_name.strip().split()
+        first_name = name_parts[0]
+        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+
+        add_db = BaseModel()
+        add_db.email = data.email
+        add_db.password = data.password
+        add_db.first_name = first_name
+        add_db.last_name = last_name
+        add_db.role_id = admin_role_id
+        add_db.is_active = True
+
         session.add(add_db)
         await session.commit()
         await session.refresh(add_db)
+
+        add_db.username = f"{data.email.split('@')[0]}{add_db.id}"
+        await session.commit()
+        await session.refresh(add_db)
+
         return add_db
     except Exception as error:
         send_error_response(str(error), msg_already_exist)
