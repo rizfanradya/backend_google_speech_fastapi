@@ -4,6 +4,7 @@ from models.user import User
 import jwt
 import json
 import bcrypt
+from datetime import timedelta
 from utils.database import get_db
 from utils.auth import create_access_token, create_refresh_token
 from utils.error_response import send_error_response
@@ -15,7 +16,8 @@ from schemas.user import UserAuth as UserSchema
 from utils.config import (
     JWT_REFRESH_SECRET_KEY,
     ALGORITHM,
-    CACHE_EXPIRED
+    CACHE_EXPIRED,
+    ACCESS_TOKEN_MOBILE_EXPIRE_MINUTES
 )
 
 router = APIRouter()
@@ -86,7 +88,9 @@ async def user_mobile_login(form_data: OAuth2PasswordRequestForm = Depends(), se
     user_info_pwd = user_info.get('password').encode('utf-8')  # type: ignore
     bcrypt_checkpw = bcrypt.checkpw(form_data_pwd, user_info_pwd)
     access_token = create_access_token(
-        user_id, expires_delta=525600)  # type: ignore
+        user_id,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_MOBILE_EXPIRE_MINUTES)
+    )
     if bcrypt_checkpw:
         return {
             "id": user_id,  # type: ignore
