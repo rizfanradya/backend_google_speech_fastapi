@@ -67,7 +67,7 @@ async def user_login(form_data: OAuth2PasswordRequestForm = Depends(), session: 
 
 
 @router.post("/token/mobile")
-async def user_login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
+async def user_mobile_login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
     cache_key = f"{cache_title}:{form_data.username}"
     cached_data = await redis.get(cache_key)
     if cached_data:
