@@ -7,7 +7,7 @@ services:
       POSTGRES_DB: google_speech
       POSTGRES_PASSWORD: O8IfbjmMtQek06kBsy8WzveVxu0GLGMo5RExBZadbn5AUA0UQh
     ports:
-      - "15432:5432"
+      - "5431:5432"
     volumes:
       - db_data_pgsql:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +20,7 @@ services:
     image: redis:latest
     restart: always
     ports:
-      - "16379:6379"
+      - "6371:6379"
     command: redis-server --appendonly yes --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
@@ -35,7 +35,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8001:8000"
+      - "8004:8000"
     restart: always
     volumes:
       - backend_uploads:/app/data/uploads
