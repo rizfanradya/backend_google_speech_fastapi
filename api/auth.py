@@ -66,6 +66,48 @@ async def user_login(form_data: OAuth2PasswordRequestForm = Depends(), session: 
         )
 
 
+@router.post("/token/mobile")
+async def user_login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
+    cache_key = f"{cache_title}:{form_data.username}"
+    cached_data = await redis.get(cache_key)
+    if cached_data:
+        user_info = json.loads(cached_data)
+    else:
+        result = await session.execute(select(User).where(User.email == form_data.username).options(joinedload(User.role)))
+        user_info = result.scalars().first()
+        if user_info is None:
+            send_error_response("User not found")
+
+        user_info = UserSchema.model_validate(user_info).model_dump()
+        await redis.set(cache_key, json.dumps(user_info), ex=CACHE_EXPIRED)
+
+    user_id = int(user_info.get('id'))
+    form_data_pwd = form_data.password.encode('utf-8')
+    user_info_pwd = user_info.get('password').encode('utf-8')  # type: ignore
+    bcrypt_checkpw = bcrypt.checkpw(form_data_pwd, user_info_pwd)
+    access_token = create_access_token(
+        user_id, expires_delta=525600)  # type: ignore
+    if bcrypt_checkpw:
+        return {
+            "id": user_id,  # type: ignore
+            "access_token": access_token,
+            "status": user_info["is_active"],  # type: ignore
+            "role": user_info["role"]["role"],  # type: ignore
+            "detail": "Login success"
+        }
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "id": user_id,  # type: ignore
+                "access_token": None,
+                "status": False,
+                "role": None,
+                "detail": "Password not match"
+            }
+        )
+
+
 @router.post("/refresh_token/{refresh_token}")
 async def refresh_token(refresh_token: str, session: AsyncSession = Depends(get_db)):
     if JWT_REFRESH_SECRET_KEY is None:

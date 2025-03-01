@@ -11,5 +11,7 @@ RUN apt-get update && \
   apt-get update && \
   apt-get install -y postgresql-client-17
 
+RUN apt update && apt install -y ffmpeg
+
 EXPOSE 8000
 CMD ["python3", "app.py"]
