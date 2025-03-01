@@ -94,7 +94,7 @@ async def user_mobile_login(form_data: OAuth2PasswordRequestForm = Depends(), se
     if bcrypt_checkpw:
         return {
             "id": user_id,  # type: ignore
-            "access_token": access_token,
+            "accessToken": access_token,
             "status": user_info["is_active"],  # type: ignore
             "role": user_info["role"]["role"],  # type: ignore
             "detail": "Login success"
@@ -104,7 +104,7 @@ async def user_mobile_login(form_data: OAuth2PasswordRequestForm = Depends(), se
             status_code=404,
             detail={
                 "id": user_id,  # type: ignore
-                "access_token": None,
+                "accessToken": None,
                 "status": False,
                 "role": None,
                 "detail": "Password not match"
