@@ -4,7 +4,7 @@ from models.user import User
 import jwt
 import json
 import bcrypt
-from datetime import timedelta
+from datetime import timedelta, datetime
 from utils.database import get_db
 from utils.auth import create_access_token, create_refresh_token
 from utils.error_response import send_error_response
@@ -15,6 +15,7 @@ from sqlalchemy.future import select
 from schemas.user import UserAuth as UserSchema
 from utils.config import (
     JWT_REFRESH_SECRET_KEY,
+    JWT_SECRET_KEY,
     ALGORITHM,
     CACHE_EXPIRED,
     ACCESS_TOKEN_MOBILE_EXPIRE_MINUTES
@@ -87,10 +88,23 @@ async def user_mobile_login(form_data: OAuth2PasswordRequestForm = Depends(), se
     form_data_pwd = form_data.password.encode('utf-8')
     user_info_pwd = user_info.get('password').encode('utf-8')  # type: ignore
     bcrypt_checkpw = bcrypt.checkpw(form_data_pwd, user_info_pwd)
-    access_token = create_access_token(
-        user_id,
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_MOBILE_EXPIRE_MINUTES)
+
+    expires_delta = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_MOBILE_EXPIRE_MINUTES)
+    access_token = encoded_jwt = jwt.encode(
+        payload={
+            "exp": expires_delta,
+            "id": user_id,
+            "username": user_info['username'],
+            "email": user_info['email'],
+            "first_name": user_info['first_name'],
+            "last_name": user_info['last_name'],
+            "is_active": user_info['is_active'],
+            "role": user_info['role']['role'],
+        },
+        key=str(JWT_SECRET_KEY),
+        algorithm=ALGORITHM
     )
+
     if bcrypt_checkpw:
         return {
             "id": user_id,  # type: ignore
